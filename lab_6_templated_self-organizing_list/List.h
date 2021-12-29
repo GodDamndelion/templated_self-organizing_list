@@ -1,6 +1,3 @@
-/*20. Реализовать шаблон самоорганизующегося списка. Основной операцией яв-
-ляется операция поиска. При нахождении элемента он открепляется со сво-
-его места и вставляется в начало списка.*/
 #pragma once
 #include <fstream>
 #include <iostream>
@@ -22,43 +19,20 @@ template<class TInfo>
 using ptrNODE_L = NODE_L<TInfo>*;
 
 template<class TInfo>
-class DoublyLinkedList
+struct DoublyLinkedList
 {
-protected:
 	ptrNODE_L<TInfo> begin, end;
 	size_t size;
-public:
-	ptrNODE_L<TInfo> get_begin() { return begin; }
-	void set_begin(ptrNODE_L<TInfo> inputed) { begin = inputed; }
-	ptrNODE_L<TInfo> get_end() { return end; }
-	void set_end(ptrNODE_L<TInfo> inputed) { end = inputed; }
-	size_t get_size() { return size; }
 	DoublyLinkedList() { begin = nullptr; end = nullptr; size = 0; }
 	DoublyLinkedList(ifstream& file);
 	void First_node(const TInfo& product);
 	bool Empty();
-	void Add(const TInfo& product);
 	void Add_after_node(ptrNODE_L<TInfo> pNode, const TInfo& product);
 	void Add_before_node(ptrNODE_L<TInfo> pNode, const TInfo& product);
-	void switch_pointers(ptrNODE_L<TInfo> q, ptrNODE_L<TInfo> p);
-	void switch_pointers_with_head(ptrNODE_L<TInfo> q, ptrNODE_L<TInfo> p);
-	void sort();
-	virtual ptrNODE_L<TInfo> Search(TInfo elem);
-	void Add_into_sorted(const TInfo& product);
+	void Add_into(const TInfo& product);
 	TInfo Delete(ptrNODE_L<TInfo>& pNode);
 	void Print();
-	ptrNODE_L<TInfo> operator[](int i);
 	~DoublyLinkedList();
-};
-
-template<class TInfo>
-class self_organizing_list : public DoublyLinkedList<TInfo>
-{
-public:
-	self_organizing_list() {}
-	self_organizing_list(ifstream& file) : DoublyLinkedList<TInfo>(file) {}
-	ptrNODE_L<TInfo> Search(TInfo elem);
-	~self_organizing_list() {}
 };
 
 template<class TInfo>
@@ -77,17 +51,15 @@ DoublyLinkedList<TInfo>::DoublyLinkedList(ifstream& file)
 	TInfo product;
 	file >> product;
 	First_node(product);
-	ptrNODE_L<TInfo> tail = begin;
 	while (!file.eof())
 	{
 		file >> product;
-		Add_after_node(tail, product);
-		tail = tail->next;
+		Add_into(product);
 	}
 }
 
 template<class TInfo>
-void DoublyLinkedList<TInfo>::Add_into_sorted(const TInfo& product)
+void DoublyLinkedList<TInfo>::Add_into(const TInfo& product)
 {
 	ptrNODE_L<TInfo> place;
 	place = Find_place(begin, product);
@@ -112,15 +84,6 @@ bool DoublyLinkedList<TInfo>::Empty()
 }
 
 template<class TInfo>
-void DoublyLinkedList<TInfo>::Add(const TInfo& product)
-{
-	ptrNODE_L<TInfo> p = new NODE_L<TInfo>(product, nullptr, end);
-	end->next = p;
-	end = p;
-	size++;
-}
-
-template<class TInfo>
 void DoublyLinkedList<TInfo>::Add_after_node(ptrNODE_L<TInfo> pNode, const TInfo& product)
 {
 	ptrNODE_L<TInfo> p = new NODE_L<TInfo>(product, pNode->next, pNode);
@@ -142,71 +105,6 @@ void DoublyLinkedList<TInfo>::Add_before_node(ptrNODE_L<TInfo> pNode, const TInf
 		pNode->prev->next = p;
 	pNode->prev = p;
 	size++;
-}
-
-template<class TInfo>
-void DoublyLinkedList<TInfo>::switch_pointers(ptrNODE_L<TInfo> q, ptrNODE_L<TInfo> p)
-{
-	ptrNODE_L<TInfo> tmp = p->next;
-	p->next = tmp->next;
-	if (tmp == end)
-		end = p;
-	else
-		tmp->next->prev = tmp->prev;
-	if (tmp->info >= q->info)
-	{
-		tmp->next = q->next;
-		tmp->prev = q;
-		q->next = tmp;
-		tmp->next->prev = tmp;
-	}
-	else
-	{
-		tmp->next = q;
-		tmp->prev = q->prev;
-		if (q == begin)
-			begin = tmp;
-		else
-			q->prev->next = tmp;
-		q->prev = tmp;
-	}
-}
-
-template<class TInfo>
-ptrNODE_L<TInfo> find_place_before(ptrNODE_L<TInfo>& list, TInfo elem)
-{
-	ptrNODE_L<TInfo> ptr = list;
-	while (ptr->next->info < elem)
-		ptr = ptr->next;
-	return ptr;
-}
-
-template<class TInfo>
-void DoublyLinkedList<TInfo>::sort()
-{
-	ptrNODE_L<TInfo> ptr = begin, insert;
-	while (ptr->next)
-	{
-		if (ptr->info > ptr->next->info)
-		{
-			insert = find_place_before(begin, ptr->next->info);
-			switch_pointers(insert, ptr);
-		}
-		else
-			ptr = ptr->next;
-	}
-}
-
-template<class TInfo>
-ptrNODE_L<TInfo> DoublyLinkedList<TInfo>::Search(TInfo elem)
-{
-	ptrNODE_L<TInfo> result = nullptr, ptr = begin;
-	while (!result && ptr)
-		if (ptr->info == elem)
-			result = ptr;
-		else
-			ptr = ptr->next;
-	return result;
 }
 
 template<class TInfo>
@@ -254,61 +152,9 @@ void DoublyLinkedList<TInfo>::Print()
 }
 
 template<class TInfo>
-ptrNODE_L<TInfo> DoublyLinkedList<TInfo>::operator[](int i)
-{
-	ptrNODE_L<TInfo> result = nullptr;
-	if (begin && i >= 0 && i < size)
-		result = begin;
-	if (i < size)
-		while (i > 0)
-		{
-			if (result)
-				result = result->next;
-			else
-				result = nullptr;
-			--i;
-		}
-	return result;
-}
-
-template<class TInfo>
 DoublyLinkedList<TInfo>::~DoublyLinkedList()
 {
 	while (!Empty())
 		Delete(begin);
 	_CrtDumpMemoryLeaks(); //////////////////////////////////////////////
-}
-
-template<class TInfo>
-void DoublyLinkedList<TInfo>::switch_pointers_with_head(ptrNODE_L<TInfo> q, ptrNODE_L<TInfo> p)
-{
-	ptrNODE_L<TInfo> tmp = p->next;
-	p->next = tmp->next;
-	if (tmp == end)
-		end = p;
-	else
-		tmp->next->prev = tmp->prev;
-	tmp->next = q;
-	tmp->prev = q->prev;
-	if (q == begin)
-		begin = tmp;
-	else
-		q->prev->next = tmp;
-	q->prev = tmp;
-}
-
-template<class TInfo>
-ptrNODE_L<TInfo> self_organizing_list<TInfo>::Search(TInfo elem)
-{
-	ptrNODE_L<TInfo> result = nullptr, ptr = DoublyLinkedList<TInfo>::begin;
-	while (!result && ptr)
-		if (ptr->info == elem)
-		{
-			result = ptr;
-			if (ptr != DoublyLinkedList<TInfo>::begin)
-				DoublyLinkedList<TInfo>::switch_pointers_with_head(DoublyLinkedList<TInfo>::begin, ptr->prev);
-		}
-		else
-			ptr = ptr->next;
-	return result;
 }

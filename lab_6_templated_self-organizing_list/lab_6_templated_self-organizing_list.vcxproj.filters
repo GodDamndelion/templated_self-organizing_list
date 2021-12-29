@@ -25,6 +25,9 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="S-O_List.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
     <ClInclude Include="List.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
